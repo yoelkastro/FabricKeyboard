@@ -10,12 +10,13 @@
 #endif
 
 #define SCREEN_ADDRESS 0x3C
-#define NUM_CAPS 3
+#define NUM_CAPS 4
 
 Adafruit_MPR121 caps[NUM_CAPS];
 Adafruit_SSD1306 display(128, 64, &Wire, 4);
 
 void setup() {
+  Serial.begin(115200);
 
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
   display.clearDisplay();
@@ -43,10 +44,12 @@ void loop() {
     getTouches(vals[i], caps[i].touched());
 
     for(int j = 0; j < 12; j ++){
-      if(vals[i][j])
-        display.fillRect((display.width() / 12) * (12 - j), (display.height() / 3) * i, (3 * display.width() / 48), (3 * display.width() / 48), SSD1306_WHITE);    
+      if(vals[i][j]){
+        display.fillRect((display.width() / 12) * (12 - j), (display.height() / NUM_CAPS) * i, (display.width() / 16), (display.width() / 16), SSD1306_WHITE);
+        Serial.println(i);
+      }
       else
-        display.drawRect((display.width() / 12) * (12 - j), (display.height() / 3) * i, (3 * display.width() / 48), (3 * display.width() / 48), SSD1306_WHITE);
+        display.drawRect((display.width() / 12) * (12 - j), (display.height() / NUM_CAPS) * i, (display.width() / 16), (display.width() / 16), SSD1306_WHITE);
     }
   }
   display.display();

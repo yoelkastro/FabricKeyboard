@@ -6,12 +6,9 @@
  *
  */
 
-/* TO-DO: Attach to digital pin, read state of USB cable. Dynamic changes. */
-#define BLE_DEVICE false
 
 // Include BLE MIDI libraries
 #include <BLEMIDI_Transport.h>
-#include <hardware/BLEMIDI_nRF52.h>
 #include <hardware/BLEMIDI_ArduinoBLE.h>
 
 // Include USB MIDI libraries
@@ -31,7 +28,7 @@
 
 // Define default values for the I2C devices
 #define SCREEN_ADDRESS 0x3C
-#define NUM_CAPS 4
+#define NUM_CAPS 3
 
 // Define the I2C devices
 Adafruit_MPR121 caps[NUM_CAPS];
@@ -42,10 +39,22 @@ bool keyVals[NUM_CAPS][12];
 
 // Initialize the MIDI interfaces
 USBMIDI_Interface usb;
-BLEMIDI_CREATE_DEFAULT_INSTANCE();
+BLEMIDI_CREATE_DEFAULT_INSTANCE();//"Test Name", MIDI); /* TO-DO: Set proper name */
+
+// Boolean value representing if the keyboard is currently working over BLE or not
+bool isBleDevice;
 
 // Boolean value representing if the keyboard is currently connected by BLE or not
-bool isConnected;
+bool isBleConnected;
+
+/*
+ * Returns a boolean for whether the keyboard is currently connected over the USB port or not.
+ * 
+ * @return: A boolean value representing if the keyboard is currently connected over the USB port. True if it is, false otherwise
+ */
+bool isConnected(){
+	return digitalRead(12);
+}
 
 /*
  * Updates the values of the keys of according to the value of one MPR121 sensor.
@@ -71,6 +80,7 @@ void updateKeyValues(){
 
 /*
  * Update the values for all keys attached to all capacitive touch sensors, and play them.
+ * 
  * The act of playing the note has to be separately encapsulated since checking if the value has changes
  * is significantly more space efficient when the value is being updated instead of in the main loop.
  */
@@ -90,9 +100,9 @@ void updateKeyValuesAndPlay(){
 		  	// depending on if the key is now pressed or not
 		    if(newVal != keyVals[c][i]){
 		    	if(newVal)
-		    		noteOn(1, c * 12 + i + 36, 127);
+		    		noteOn(1, c * 12 + i + 48, 127);
 		    	else
-		    		noteOff(1, c * 12 + i + 36, 127);
+		    		noteOff(1, c * 12 + i + 48, 127);
 		    }
 
 		    // Update the value for the key
@@ -127,6 +137,28 @@ void showKeyStates(){
 }
 
 /*
+ * Shows the current MIDI interface in use on the display. Can be USB or BLE. USB is always used if the device is connected over USB,
+ * otherwise BLE is used.
+ */
+void showMidiInterface(){
+	
+	display.clearDisplay();
+
+	display.setTextSize(1);             // Normal 1:1 pixel scale
+	display.setTextColor(SSD1306_WHITE);        // Draw white text
+	display.setCursor(0,0);             // Start at top-left corner
+
+	if(isBleDevice){
+		display.println(F("BLE"));
+	}
+	else{
+		display.println(F("USB"));
+	}
+
+	display.display();
+}
+
+/*
  * Sends a MIDI note on event over the selected output method.
  * 
  * @param channel:  The MIDI channel the note should be played on.
@@ -135,7 +167,7 @@ void showKeyStates(){
  * 
  */
 void noteOn(byte channel, byte note, byte velocity){
-	if(BLE_DEVICE){
+	if(isBleDevice){
 		MIDI.sendNoteOn(note, velocity, channel);
 	}
 	else{
@@ -152,7 +184,7 @@ void noteOn(byte channel, byte note, byte velocity){
  * 
  */
 void noteOff(byte channel, byte note, byte velocity){
-	if(BLE_DEVICE){
+	if(isBleDevice){
 		MIDI.sendNoteOff(note, velocity, channel);
 	}
 	else{
@@ -165,11 +197,11 @@ void noteOff(byte channel, byte note, byte velocity){
  * Change the value of isConnected when the device connects or disconnects
  */
 void onConnect(){
-	isConnected = true;
+	isBleConnected = true;
 }
 
 void onDisconnect(){
-	isConnected = false;
+	isBleConnected = false;
 }
 
 /*
@@ -182,23 +214,32 @@ void setup(){
 	display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
 	display.clearDisplay();
 	display.display();
+
+	// Digital pin 12 is used to check if the USB port is connected or not
+	pinMode(12, INPUT);
 	
 	for(int i = 0; i < NUM_CAPS; i ++){
 		caps[i] = Adafruit_MPR121();
 		caps[i].begin(0x5A + i);
 	}
 
-	if(BLE_DEVICE){
-		MIDI.begin();
+	BLEMIDI.setHandleDisconnected(onDisconnect);
+	BLEMIDI.setHandleConnected(onConnect);
 
-		BLEMIDI.setHandleConnected(onConnect);
-  		BLEMIDI.setHandleDisconnected(onDisconnect);
-		
+	MIDI.begin();
+
+	if(!isConnected()){
+
+		isBleDevice = true;
+
   		/*MIDI.setHandleNoteOn(OnNoteOn);
   		MIDI.setHandleNoteOff(OnNoteOff);*/
 	}
 	else{
+		BLEMIDI.stopAdvertising();
+		
 		Control_Surface.begin();
+		isBleDevice = false;
 	}
 	
 }
@@ -206,14 +247,29 @@ void setup(){
 void loop(){
 
 	// The input has to be read every loop for the connection to work
-	if(BLE_DEVICE)
+	if(isBleDevice){
 		MIDI.read();
+		if(!isBleConnected){
+			noteOn(1, 48, 127);
+			noteOff(1, 48, 127);
+		}
+
+		// If the keyboard is currently using BLE but is connected over the USB port, switch to USB
+		if(isConnected()){
+			BLEMIDI.stopAdvertising();
+			Control_Surface.begin();
+			isBleDevice = false;
+		}
+	}
+	else{
+		// If the keyboard is currently using USB but is not connected over the USB port, switch to BLE
+		if(!isConnected()){
+			BLEMIDI.startAdvertising();
+			isBleDevice = true;
+		}
+	}
 
 	updateKeyValuesAndPlay();
-	showKeyStates();
-
-	/*for(int c = 0; c < NUM_CAPS; c ++){
-		for(int i = 0; i < 12; i ++)
-	}*/
+	showMidiInterface();
 
 }
