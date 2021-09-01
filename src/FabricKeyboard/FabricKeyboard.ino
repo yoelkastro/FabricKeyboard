@@ -100,9 +100,9 @@ void updateKeyValuesAndPlay(){
 		  	// depending on if the key is now pressed or not
 		    if(newVal != keyVals[c][i]){
 		    	if(newVal)
-		    		noteOn(1, c * 12 + i + 48, 127);
+		    		noteOn(1, (c * 12) + (11 - i) + 48, 127);
 		    	else
-		    		noteOff(1, c * 12 + i + 48, 127);
+		    		noteOff(1, (c * 12) + (11 - i) + 48, 127);
 		    }
 
 		    // Update the value for the key
