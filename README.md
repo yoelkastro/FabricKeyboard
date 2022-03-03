@@ -1,4 +1,7 @@
 # FabricKeyboard
 MIDI Keyboard made out of fabric
 
-Circuit: https://easyeda.com/YoelKastro/fabrickeyboard
+Dependencies:
+* [BLE MIDI transport layer library](https://github.com/yoelkastro/Arduino-BLE-MIDI)
+
+[Circuit](https://easyeda.com/YoelKastro/fabrickeyboard)
