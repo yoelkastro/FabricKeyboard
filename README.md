@@ -1,4 +1,11 @@
 # FabricKeyboard
-MIDI Keyboard made out of fabric
+MIDI Keyboard made out of fabric, making it possible to carry a 4 octave keyboard simply by folding it up!
 
-Circuit: https://easyeda.com/YoelKastro/fabrickeyboard
+Dependencies:
+* [BLE MIDI transport layer library](https://github.com/yoelkastro/Arduino-BLE-MIDI)
+
+[Circuit](https://easyeda.com/YoelKastro/fabrickeyboard)
+
+
+https://user-images.githubusercontent.com/32455293/194556652-df12e9a8-521a-4ebb-a752-a541f6f45720.mp4
+
