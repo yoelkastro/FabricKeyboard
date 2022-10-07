@@ -100,9 +100,9 @@ void updateKeyValuesAndPlay(){
 		  	// depending on if the key is now pressed or not
 		    if(newVal != keyVals[c][i]){
 		    	if(newVal)
-		    		noteOn(1, (c * 12) + (11 - i) + 48, 127);
+		    		noteOn(1, (c * 12) + i + 48, 127);
 		    	else
-		    		noteOff(1, (c * 12) + (11 - i) + 48, 127);
+		    		noteOff(1, (c * 12) + i + 48, 127);
 		    }
 
 		    // Update the value for the key
@@ -127,9 +127,12 @@ void showKeyStates(){
 			// If the key is pressed, draw the corresponding box filled in
 			if(keyVals[i][j])
 				display.fillRect((display.width() / 12) * (12 - j), (display.height() / NUM_CAPS) * i, (display.width() / 16), (display.width() / 16), SSD1306_WHITE);
+				
 			// Otherwise, draw the box empty  
-			else
+			else{
 				display.drawRect((display.width() / 12) * (12 - j), (display.height() / NUM_CAPS) * i, (display.width() / 16), (display.width() / 16), SSD1306_WHITE);
+				Serial.println(i);
+			}
 			}
 		
 	}
@@ -214,6 +217,7 @@ void setup(){
 	display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
 	display.clearDisplay();
 	display.display();
+	Serial.begin(115200);
 
 	// Digital pin 12 is used to check if the USB port is connected or not
 	pinMode(12, INPUT);
@@ -270,6 +274,6 @@ void loop(){
 	}
 
 	updateKeyValuesAndPlay();
-	showMidiInterface();
+	showKeyStates();
 
 }

@@ -2,12 +2,12 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <CapacitiveSensor.h>
+//#include <CapacitiveSensor.h>
 
 #define SCREEN_ADDRESS 0x3C
 Adafruit_SSD1306 display(128, 64, &Wire, 4);
 
-CapacitiveSensor css[] = {CapacitiveSensor(9, 10), CapacitiveSensor(9, 11), CapacitiveSensor(9, 12)};
+//CapacitiveSensor css[] = {CapacitiveSensor(9, 10), CapacitiveSensor(9, 11), CapacitiveSensor(9, 12)};
 
 int results[] = {0, 0};
 
